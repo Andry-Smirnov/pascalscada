@@ -1,12 +1,17 @@
 unit pascalscada.communication.ports.sockets.tcp;
 
+
 {$mode objfpc}{$H+}
+
 
 interface
 
+
 uses
-  Classes, SysUtils,
+  Classes,
+  SysUtils,
   pascalscada.communication.ports.sockets.basesocket
+
 
   {$IFDEF UNIX}
   , pascalscada.communication.ports.sockets.unix
@@ -21,9 +26,10 @@ type
   TpSCADABaseTCPSocket = TpSCADAUnixSocket;
   {$ENDIF}
 
+
   { TpSCADATCPSocket }
 
-  TpSCADATCPSocket = Class(TpSCADABaseTCPSocket)
+  TpSCADATCPSocket = class(TpSCADABaseTCPSocket)
   protected
     function GetSocketType: TpSCADASocketType; override;
   published
@@ -45,23 +51,26 @@ type
     //: Timeout in milliseconds to I/O operations.
     property Timeout;
 
-    property  OnPortClose;
-    property  OnPortCloseError;
-    property  OnPortDisconnected;
-    property  OnPortOpen;
-    property  OnPortOpenError;
-    property  OnReadError;
-    property  OnWriteError;
+    property OnPortClose;
+    property OnPortCloseError;
+    property OnPortDisconnected;
+    property OnPortOpen;
+    property OnPortOpenError;
+    property OnReadError;
+    property OnWriteError;
   end;
+
 
 implementation
 
+
 { TpSCADATCPSocket }
+
 
 function TpSCADATCPSocket.GetSocketType: TpSCADASocketType;
 begin
-  Result:=stTCP;
+  Result := stTCP;
 end;
 
-end.
 
+end.

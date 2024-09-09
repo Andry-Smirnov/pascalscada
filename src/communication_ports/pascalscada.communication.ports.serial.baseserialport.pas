@@ -1,12 +1,18 @@
 unit pascalscada.communication.ports.serial.baseserialport;
 
+
 {$mode objfpc}{$H+}
+
 
 interface
 
+
 uses
-  Classes, SysUtils, syncobjs,
+  Classes,
+  SysUtils,
+  syncobjs,
   pascalscada.communication.ports.basecommport;
+
 
 type
 
@@ -191,12 +197,14 @@ begin
   FSerialPortName:=AValue;
 end;
 
+
 procedure TpSCADACustomSerialPort.SetStopBits(AValue: TpSCADASerialStopBits);
 begin
   DoExceptionIfActive;
   if FStopBits=AValue then Exit;
   FStopBits:=AValue;
 end;
+
 
 procedure TpSCADACustomSerialPort.SetTimeout(AValue: LongWord);
 var
@@ -208,11 +216,11 @@ begin
 end;
 
 
-
 procedure TpSCADACustomSerialPort.ClearIOBuffers;
 begin
 
 end;
+
 
 procedure TpSCADACustomSerialPort.CallPortOpenHandlers;
 begin
@@ -220,11 +228,13 @@ begin
   TThread.Queue(nil, @DoPortOpen);
 end;
 
+
 procedure TpSCADACustomSerialPort.CallPortOpenErrorHandlers;
 begin
   inherited CallPortOpenErrorHandlers;
   TThread.Queue(nil, @DoPortOpenError);
 end;
+
 
 procedure TpSCADACustomSerialPort.CallPortCloseHandlers;
 begin
@@ -232,11 +242,13 @@ begin
   TThread.Queue(nil, @DoPortClose);
 end;
 
+
 procedure TpSCADACustomSerialPort.CallPortCloseErrorHandlers;
 begin
   inherited CallPortCloseErrorHandlers;
   TThread.Queue(nil, @DoPortCloseError);
 end;
+
 
 procedure TpSCADACustomSerialPort.CallReadErrorHandlers;
 begin
@@ -244,11 +256,13 @@ begin
   TThread.Queue(nil, @DoReadError);
 end;
 
+
 procedure TpSCADACustomSerialPort.CallWriteErrorHandlers;
 begin
   inherited CallWriteErrorHandlers;
   TThread.Queue(nil, @DoWriteError);
 end;
+
 
 constructor TpSCADACustomSerialPort.Create(AOwner: TComponent);
 begin
@@ -261,6 +275,7 @@ begin
   FExclusiveDevice:=true;
   FClearBufOnErr:=true;
 end;
+
 
 end.
 

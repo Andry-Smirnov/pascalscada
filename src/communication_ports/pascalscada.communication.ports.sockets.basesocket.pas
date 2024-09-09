@@ -1,53 +1,61 @@
 unit pascalscada.communication.ports.sockets.basesocket;
 
+
 {$mode objfpc}{$H+}
+
 
 interface
 
+
 uses
-  Classes, SysUtils, Sockets,
+  Classes,
+  SysUtils,
+  Sockets,
   pascalscada.communication.ports.basecommport,
   pascalscada.multithreading.core_affinity_threads,
   pascalscada.multithreading.event_synchronization,
   pascalscada.multithreading.message_queue;
 
+
 type
-  TConnectEvent=procedure(var Ok:Boolean) of object;
+  TConnectEvent = procedure(var Ok: boolean) of object;
   TpSCADASocketType = (stUndefined, stTCP, stUDP);
 
-  {$IF defined(FPC) AND (FPC_FULLVERSION >= 20400)}
+{$IF defined(FPC) AND (FPC_FULLVERSION >= 20400)}
   {$IF defined(WIN32) or defined(WIN64)}
   TpSCADASockLen = tOS_INT;
   {$ELSE}
   TpSCADASockLen = TSockLen;
   {$IFEND}
-  {$ELSE}
+{$ELSE}
   TpSCADASockLen = LongInt;
-  {$IFEND}
+{$IFEND}
 
-  { TpSCADAConnectSocketThread }
+
+{ TpSCADAConnectSocketThread }
 
   TpSCADAConnectSocketThread = class(TpSCADACoreAffinityThread)
   private
-    FActive:Boolean;
-    FCheckSocket,
-    FConnectSocket,
+    FActive: Boolean;
+    FCheckSocket: TConnectEvent;
+    FConnectSocket: TConnectEvent;
     FDisconnectSocket: TConnectEvent;
-    FEnd:TpSCADAThreadSyncEvent;
+    FEnd: TpSCADAThreadSyncEvent;
     FReconnectSocket: TConnectEvent;
-    FMessageQueue:TpSCADAThreadSafeMessageQueue;
+    FMessageQueue: TpSCADAThreadSafeMessageQueue;
 
-    FAutoReconnect,
-    FReconnectInterval,
-    FReconnectRetries:Integer;
-    function GetEnableAutoReconnect:Boolean;
+    FAutoReconnect: integer;
+    FReconnectInterval: integer;
+    FReconnectRetries: integer;
 
-    function GetReconnectInterval:Integer;
-    function GetReconnectRetries:Integer;
+    function GetEnableAutoReconnect: Boolean;
 
-    procedure SetReconnectInterval(aValue:Integer);
-    procedure SetEnableAutoReconnect(aValue:Boolean);
-    procedure SetReconnectRetries(AValue: Integer);
+    function GetReconnectInterval: integer;
+    function GetReconnectRetries: integer;
+
+    procedure SetReconnectInterval(aValue: integer);
+    procedure SetEnableAutoReconnect(aValue: Boolean);
+    procedure SetReconnectRetries(AValue: integer);
   protected
     procedure Execute; override;
   public
@@ -58,35 +66,37 @@ type
     procedure WaitEnd;
     procedure StopAutoReconnect;
   published
-    property ConnectSocket:TConnectEvent read FConnectSocket write FConnectSocket;
-    property ReconnectSocket:TConnectEvent read FReconnectSocket write FReconnectSocket;
-    property DisconnectSocket:TConnectEvent read FDisconnectSocket write FDisconnectSocket;
-    property CheckSocket:TConnectEvent read FCheckSocket write FCheckSocket;
+    property ConnectSocket: TConnectEvent read FConnectSocket write FConnectSocket;
+    property ReconnectSocket: TConnectEvent read FReconnectSocket write FReconnectSocket;
+    property DisconnectSocket: TConnectEvent read FDisconnectSocket write FDisconnectSocket;
+    property CheckSocket: TConnectEvent read FCheckSocket write FCheckSocket;
 
-    property EnableAutoReconnect:Boolean read GetEnableAutoReconnect write SetEnableAutoReconnect;
-    property ReconnectInterval:Integer read GetReconnectInterval write SetReconnectInterval;
+    property EnableAutoReconnect: Boolean read GetEnableAutoReconnect write SetEnableAutoReconnect;
+    property ReconnectInterval: integer read GetReconnectInterval write SetReconnectInterval;
   end;
+
 
   { TpSCADACustomSocket }
 
   TpSCADACustomSocket = class(TpSCADACustomCommPort)
   private
-    FConnectThread:TpSCADAConnectSocketThread;
-    FExclusiveReaded:Boolean;
-    function  GetEnableAutoReconect: Boolean;
-    function  GetReconnectInterval: Integer;
+    FConnectThread: TpSCADAConnectSocketThread;
+    FExclusiveReaded: Boolean;
+
+    function GetEnableAutoReconect: Boolean;
+    function GetReconnectInterval: integer;
     procedure setEnableAutoReconnect(AValue: Boolean);
     procedure SetExclusive(AValue: Boolean);
-    procedure SetIPv4Address(AValue: AnsiString);
-    procedure SetPortNumber(AValue: Word);
-    procedure SetReconnectInterval(AValue: Integer);
-    procedure SetTimeout(AValue: LongWord);
+    procedure SetIPv4Address(AValue: ansistring);
+    procedure SetPortNumber(AValue: word);
+    procedure SetReconnectInterval(AValue: integer);
+    procedure SetTimeout(AValue: longword);
   protected
-    FIPv4Address: AnsiString;
-    FPortNumber: Word;
-    FTimeout: LongWord;
-    FSocket:Tsocket;
-    FSocketType:TpSCADASocketType;
+    FIPv4Address: ansistring;
+    FPortNumber: word;
+    FTimeout: longword;
+    FSocket: Tsocket;
+    FSocketType: TpSCADASocketType;
 
     procedure CallPortCloseHandlers; override;
     procedure CallPortCloseErrorHandlers; override;
@@ -95,310 +105,352 @@ type
     procedure CallPortOpenErrorHandlers; override;
     procedure CallReadErrorHandlers; override;
     procedure CallWriteErrorHandlers; override;
-    function  Close: Boolean; override;
+    function Close: Boolean; override;
     procedure Loaded; override;
-    function  PortSettingsOK: Boolean; override;
-    function  Open: Boolean; override;
+    function PortSettingsOK: Boolean; override;
+    function Open: Boolean; override;
 
     //: Enables the auto reconnection if a connection is lost or failed.
-    property EnableAutoReconnect:Boolean read GetEnableAutoReconect write setEnableAutoReconnect default true;
+    property EnableAutoReconnect: Boolean read GetEnableAutoReconect write setEnableAutoReconnect default True;
     //: Tells if the communication port is exclusive (if true, avoid it to open in design time).
-    property ExclusiveDevice:Boolean read FExclusiveDevice write SetExclusive default true;
+    property ExclusiveDevice: Boolean read FExclusiveDevice write SetExclusive default True;
     //: IPv4 address of the server to connect.
-    property IPv4Address:AnsiString read FIPv4Address write SetIPv4Address nodefault;
+    property IPv4Address: ansistring read FIPv4Address write SetIPv4Address nodefault;
     //: Server port to connect. To use Modbus, set this to 502 and to use Siemens ISOTCP set it to 102.
-    property Port:Word read FPortNumber write SetPortNumber default 102;
+    property Port: word read FPortNumber write SetPortNumber default 102;
     //: Time to retry a lost connection in milliseconds.
-    property ReconnectRetryInterval:Integer read GetReconnectInterval write SetReconnectInterval default 5000;
+    property ReconnectRetryInterval: integer read GetReconnectInterval write SetReconnectInterval default 5000;
     //: Timeout in milliseconds to I/O operations.
-    property Timeout:LongWord read FTimeout write SetTimeout default 1000;
-
+    property Timeout: longword read FTimeout write SetTimeout default 1000;
   protected
     procedure CheckSocket(var Ok: Boolean); virtual; abstract;
     procedure CloseMySocket(var Ok: Boolean); virtual; abstract;
     procedure ConnectSocket(var Ok: Boolean); virtual; abstract;
-    function  GetSocketType:TpSCADASocketType; virtual; abstract;
-    function  InvalidSocket:Tsocket; virtual; abstract;
-    procedure ReconnectSocket(var Ok: Boolean);  virtual; abstract;
-
-  protected
-    function CheckConnection(var CommResult:LongInt; var incRetries:Boolean):Boolean; virtual; abstract;
-    function connect_with_timeout(sock:Tsocket; address:PSockAddr; address_len:TpSCADASockLen; ConnectTimeout:LongInt):LongInt; virtual; abstract;
-    function connect_without_timeout(sock:Tsocket; address:PSockAddr; address_len:TpSCADASockLen):LongInt; virtual; abstract;
-    function setblockingmode(fd:TSocket; mode:LongInt):LongInt; virtual; abstract;
-    function socket_recv(buf:PByte; len: Cardinal; flags, recv_timeout: LongInt):LongInt; virtual; abstract;
-    function socket_send(buf:PByte; len: Cardinal; flags, send_timeout: LongInt):LongInt; virtual; abstract;
+    function GetSocketType: TpSCADASocketType; virtual; abstract;
+    function InvalidSocket: Tsocket; virtual; abstract;
+    procedure ReconnectSocket(var Ok: Boolean); virtual; abstract;
+    function CheckConnection(var CommResult: LongInt; var incRetries: Boolean): Boolean; virtual; abstract;
+    function connect_with_timeout(sock: Tsocket; address: PSockAddr;
+      address_len: TpSCADASockLen; ConnectTimeout: LongInt): LongInt; virtual; abstract;
+    function connect_without_timeout(sock: Tsocket; address: PSockAddr;
+      address_len: TpSCADASockLen): LongInt; virtual; abstract;
+    function setblockingmode(fd: TSocket; mode: LongInt): LongInt; virtual; abstract;
+    function socket_recv(buf: PByte; len: Cardinal; flags, recv_timeout: LongInt): LongInt; virtual; abstract;
+    function socket_send(buf: PByte; len: Cardinal; flags, send_timeout: LongInt): LongInt; virtual; abstract;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    function Read(buffer: PByte; buffer_size, max_retries: LongInt;
-      var bytes_read: LongInt): LongInt; override; overload;
+    function Read(buffer: PByte; BufferSize, MaxRetries: LongInt;
+      var BytesRead: LongInt): LongInt; override; overload;
     function ReallyActive: Boolean; override;
     function Write(buffer: PByte; buffer_size, max_retries: LongInt;
       var bytes_written: LongInt): LongInt; override; overload;
   end;
 
+
 const
   MODE_NONBLOCKING = 1;
   MODE_BLOCKING = 0;
+
 
 resourcestring
   SPascalSCADA_TheAddressIsNotAValidIPv4Address = 'The address "%s" is not a valid IPv4 address';
   SPascalSCADA_InvalidSocketPortNumber = '"%d" is not a valid socket port number';
 
+
 implementation
 
-uses dateutils, syncobjs, pascalscada.utilities.strings;
+
+uses
+  dateutils,
+  syncobjs,
+  pascalscada.utilities.strings;
 
 
 function TpSCADAConnectSocketThread.GetEnableAutoReconnect: Boolean;
 var
   res: LongInt = 0;
 begin
-  InterLockedExchange(res,FAutoReconnect);
-  Result:=res=1;
+  InterLockedExchange(res, FAutoReconnect);
+  Result := res = 1;
 end;
 
-function TpSCADAConnectSocketThread.GetReconnectInterval: Integer;
+
+function TpSCADAConnectSocketThread.GetReconnectInterval: integer;
 begin
-  Result:=0;
-  InterLockedExchange(Result,FReconnectInterval);
+  Result := 0;
+  InterLockedExchange(Result, FReconnectInterval);
 end;
 
-function TpSCADAConnectSocketThread.GetReconnectRetries: Integer;
+
+function TpSCADAConnectSocketThread.GetReconnectRetries: integer;
 begin
-  Result:=0;
-  InterLockedExchange(Result,FReconnectRetries);
+  Result := 0;
+  InterLockedExchange(Result, FReconnectRetries);
 end;
 
-procedure TpSCADAConnectSocketThread.SetReconnectInterval(aValue: Integer);
+
+procedure TpSCADAConnectSocketThread.SetReconnectInterval(aValue: integer);
 begin
-  InterLockedExchange(FReconnectInterval,aValue);
+  InterLockedExchange(FReconnectInterval, aValue);
 end;
+
 
 procedure TpSCADAConnectSocketThread.SetEnableAutoReconnect(aValue: Boolean);
 begin
   if aValue then
-    InterLockedExchange(FAutoReconnect,1)
+    InterLockedExchange(FAutoReconnect, 1)
   else
-    InterLockedExchange(FAutoReconnect,0);
+    InterLockedExchange(FAutoReconnect, 0);
 end;
 
-procedure TpSCADAConnectSocketThread.SetReconnectRetries(AValue: Integer);
+
+procedure TpSCADAConnectSocketThread.SetReconnectRetries(AValue: integer);
 begin
-  InterLockedExchange(FReconnectRetries,AValue);
+  InterLockedExchange(FReconnectRetries, AValue);
 end;
+
 
 procedure TpSCADAConnectSocketThread.Execute;
 var
   msg: TpSCADAMsg;
-  Ok, ReconnectTimerRunning:Boolean;
-  ReconnectStarted:TDateTime;
-  msbetween: Int64;
+  Ok: Boolean;
+  ReconnectTimerRunning: Boolean;
+  ReconnectStarted: TDateTime;
+  msbetween: int64;
 begin
-  ReconnectTimerRunning:=false;
-  ReconnectStarted:=now;
-  while not Terminated do begin
-    while FMessageQueue.PeekMessage(msg,0,100,true) do begin
-      Ok:=false;
-      case msg.MsgID of
-        0: begin
-          FActive:=true;
-          if Assigned(FConnectSocket) then begin
-             FConnectSocket(Ok);
-             if (Ok) then
-               ReconnectTimerRunning:=false
-             else
-               if(FAutoReconnect=1) then begin
-                  if ReconnectTimerRunning=false then
-                    ReconnectStarted:=Now;
-                  ReconnectTimerRunning:=true;
-               end;
-           end;
-        end;
-        1: begin
-          if FActive then begin
-            if ReconnectTimerRunning=false then
-              ReconnectStarted:=Now;
-            ReconnectTimerRunning:=true;
+  ReconnectTimerRunning := False;
+  ReconnectStarted := now;
+  while not Terminated do
+    begin
+      while FMessageQueue.PeekMessage(msg, 0, 100, True) do
+        begin
+          Ok := False;
+          case msg.MsgID of
+            0:  begin
+                  FActive := True;
+                  if Assigned(FConnectSocket) then
+                    begin
+                      FConnectSocket(Ok);
+                      if (Ok) then
+                        ReconnectTimerRunning := False
+                      else
+                      if (FAutoReconnect = 1) then
+                        begin
+                          if ReconnectTimerRunning = False then
+                            ReconnectStarted := Now;
+                          ReconnectTimerRunning := True;
+                        end;
+                    end;
+                end;
+            1:  begin
+                  if FActive then
+                    begin
+                      if ReconnectTimerRunning = False then
+                        ReconnectStarted := Now;
+                      ReconnectTimerRunning := True;
+                    end;
+                end;
+            2:  begin
+                  ReconnectTimerRunning := False;
+                end;
+            3:  begin
+                  FActive := False;
+                  if Assigned(DisconnectSocket) then
+                    DisconnectSocket(Ok);
+                  ReconnectTimerRunning := False;
+                end;
           end;
         end;
-        2: begin
-          ReconnectTimerRunning:=false;
+
+      if FActive then
+        begin
+          OK := True;
+          if assigned(FCheckSocket) then
+            FCheckSocket(Ok);
+          if not ok then
+            begin
+              if ReconnectTimerRunning = False then
+                ReconnectStarted := Now;
+              ReconnectTimerRunning := True;
+            end;
         end;
-        3: begin
-            FActive:=false;
-            if Assigned(DisconnectSocket) then
-              DisconnectSocket(Ok);
-            ReconnectTimerRunning:=false;
-           end;
-      end;
+
+      msbetween := MilliSecondsBetween(now, ReconnectStarted);
+      if (FAutoReconnect = 1) and (ReconnectTimerRunning) and
+        (msbetween >= ReconnectInterval) then
+        begin
+          ReconnectStarted := Now;
+          Ok := False;
+          if Assigned(FReconnectSocket) then
+            FReconnectSocket(Ok);
+          if Ok then
+            ReconnectTimerRunning := False;
+        end;
+
+      Sleep(250);
     end;
-
-    if FActive then begin
-      OK:=true;
-      if assigned(FCheckSocket) then
-        FCheckSocket(Ok);
-      if not ok then begin
-        if ReconnectTimerRunning=false then
-          ReconnectStarted:=Now;
-        ReconnectTimerRunning:=true;
-      end;
-    end;
-
-
-    msbetween:=MilliSecondsBetween(now,ReconnectStarted);
-    if (FAutoReconnect=1) and (ReconnectTimerRunning) and (msbetween>=ReconnectInterval) then begin
-      ReconnectStarted:=Now;
-      Ok:=false;
-      if Assigned(FReconnectSocket) then FReconnectSocket(Ok);
-      if Ok then
-        ReconnectTimerRunning:=false;
-    end;
-
-    Sleep(250);
-  end;
   FEnd.SetEvent;
 end;
+
 
 constructor TpSCADAConnectSocketThread.Create;
 begin
   inherited Create(True);
-  FMessageQueue:=TpSCADAThreadSafeMessageQueue.Create;
-  FEnd:=TpSCADAThreadSyncEvent.Create(true, false);
+  FMessageQueue := TpSCADAThreadSafeMessageQueue.Create;
+  FEnd := TpSCADAThreadSyncEvent.Create(True, False);
 end;
+
 
 procedure TpSCADAConnectSocketThread.Connect;
 var
   msg: PpSCADAMsgPkg;
 begin
   msg := GetMem(SizeOf(TpSCADAMsgPkg));
-  FillByte(msg^,SizeOf(TpSCADAMsgPkg),0);
-  msg^.Msg.MsgID:=0;
-  msg^.Msg.lParam:=nil;
-  msg^.Msg.wParam:=nil;
-  msg^.Msg.Priority:=false;
+  FillByte(msg^, SizeOf(TpSCADAMsgPkg), 0);
+  msg^.Msg.MsgID := 0;
+  msg^.Msg.lParam := nil;
+  msg^.Msg.wParam := nil;
+  msg^.Msg.Priority := False;
   FMessageQueue.PostMessage(msg);
 end;
+
 
 procedure TpSCADAConnectSocketThread.Disconnect;
 var
   msg: PpSCADAMsgPkg;
 begin
   msg := GetMem(SizeOf(TpSCADAMsgPkg));
-  FillByte(msg^,SizeOf(TpSCADAMsgPkg),0);
-  msg^.Msg.MsgID:=3;
-  msg^.Msg.lParam:=nil;
-  msg^.Msg.wParam:=nil;
-  msg^.Msg.Priority:=false;
-  FMessageQueue.PostMessage(msg); end;
+  FillByte(msg^, SizeOf(TpSCADAMsgPkg), 0);
+  msg^.Msg.MsgID := 3;
+  msg^.Msg.lParam := nil;
+  msg^.Msg.wParam := nil;
+  msg^.Msg.Priority := False;
+  FMessageQueue.PostMessage(msg);
+end;
+
 
 procedure TpSCADAConnectSocketThread.NotifyDisconnect;
 var
   msg: PpSCADAMsgPkg;
 begin
   msg := GetMem(SizeOf(TpSCADAMsgPkg));
-  FillByte(msg^,SizeOf(TpSCADAMsgPkg),0);
-  msg^.Msg.MsgID:=1;
-  msg^.Msg.lParam:=nil;
-  msg^.Msg.wParam:=nil;
-  msg^.Msg.Priority:=false;
+  FillByte(msg^, SizeOf(TpSCADAMsgPkg), 0);
+  msg^.Msg.MsgID := 1;
+  msg^.Msg.lParam := nil;
+  msg^.Msg.wParam := nil;
+  msg^.Msg.Priority := False;
   FMessageQueue.PostMessage(msg);
 end;
 
+
 procedure TpSCADAConnectSocketThread.WaitEnd;
 begin
-  while not (FEnd.WaitFor(5)=wrSignaled) do
+  while not (FEnd.WaitFor(5) = wrSignaled) do
     CheckSynchronize(5);
 end;
+
 
 procedure TpSCADAConnectSocketThread.StopAutoReconnect;
 var
   msg: PpSCADAMsgPkg;
 begin
   msg := GetMem(SizeOf(TpSCADAMsgPkg));
-  FillByte(msg^,SizeOf(TpSCADAMsgPkg),0);
-  msg^.Msg.MsgID:=2;
-  msg^.Msg.lParam:=nil;
-  msg^.Msg.wParam:=nil;
-  msg^.Msg.Priority:=false;
+  FillByte(msg^, SizeOf(TpSCADAMsgPkg), 0);
+  msg^.Msg.MsgID := 2;
+  msg^.Msg.lParam := nil;
+  msg^.Msg.wParam := nil;
+  msg^.Msg.Priority := False;
   FMessageQueue.PostMessage(msg);
 end;
+
 
 { TpSCADACustomSocket }
 
 function TpSCADACustomSocket.GetEnableAutoReconect: Boolean;
 begin
-  Result:=FConnectThread.EnableAutoReconnect;
+  Result := FConnectThread.EnableAutoReconnect;
 end;
 
-function TpSCADACustomSocket.GetReconnectInterval: Integer;
+
+function TpSCADACustomSocket.GetReconnectInterval: integer;
 begin
-  Result:=FConnectThread.ReconnectInterval;
+  Result := FConnectThread.ReconnectInterval;
 end;
+
 
 procedure TpSCADACustomSocket.setEnableAutoReconnect(AValue: Boolean);
 begin
-  FConnectThread.EnableAutoReconnect:=AValue;
-  if AValue=false then
+  FConnectThread.EnableAutoReconnect := AValue;
+  if AValue = False then
     FConnectThread.StopAutoReconnect;
 end;
 
+
 procedure TpSCADACustomSocket.SetExclusive(AValue: Boolean);
 var
-  oldstate:Boolean;
+  oldstate: Boolean;
 begin
-  if csReading in ComponentState then begin
-    FExclusiveReaded:=AValue;
-    exit;
-  end;
+  if csReading in ComponentState then
+    begin
+      FExclusiveReaded := AValue;
+      exit;
+    end;
 
-  if FExclusiveDevice=AValue then Exit;
+  if FExclusiveDevice = AValue then Exit;
 
   //only at design-time
-  if csDesigning in ComponentState then begin
-    //stores the old state.
-    oldstate:=Active;
-    //close the communication port.
-    Active:=False;
-    //set the new state.
-    FExclusiveDevice := AValue;
-    //restores the old state.
-    Active:=oldstate;
-  end else
+  if csDesigning in ComponentState then
+    begin
+      //stores the old state.
+      oldstate := Active;
+      //close the communication port.
+      Active := False;
+      //set the new state.
+      FExclusiveDevice := AValue;
+      //restores the old state.
+      Active := oldstate;
+    end
+  else
     FExclusiveDevice := AValue;
 end;
 
-procedure TpSCADACustomSocket.SetIPv4Address(AValue: AnsiString);
+
+procedure TpSCADACustomSocket.SetIPv4Address(AValue: ansistring);
 begin
   DoExceptionIfActive;
-  if FIPv4Address=AValue then Exit;
+  if FIPv4Address = AValue then Exit;
   if IsIPv4Address(AValue) then
-    FIPv4Address:=AValue
+    FIPv4Address := AValue
   else
-    raise Exception.Create(Format(SPascalSCADA_TheAddressIsNotAValidIPv4Address,[AValue]));
+    raise Exception.Create(Format(
+      SPascalSCADA_TheAddressIsNotAValidIPv4Address, [AValue]));
 end;
 
-procedure TpSCADACustomSocket.SetPortNumber(AValue: Word);
+
+procedure TpSCADACustomSocket.SetPortNumber(AValue: word);
 begin
   DoExceptionIfActive;
-  if FPortNumber=AValue then Exit;
-  if (AValue>=1) then
-    FPortNumber:=AValue
+  if FPortNumber = AValue then Exit;
+  if (AValue >= 1) then
+    FPortNumber := AValue
   else
-    raise Exception.Create(Format(SPascalSCADA_InvalidSocketPortNumber,[AValue]));
+    raise Exception.Create(Format(SPascalSCADA_InvalidSocketPortNumber, [AValue]));
 end;
 
-procedure TpSCADACustomSocket.SetReconnectInterval(AValue: Integer);
+
+procedure TpSCADACustomSocket.SetReconnectInterval(AValue: integer);
 begin
-  FConnectThread.ReconnectInterval:=AValue;
+  FConnectThread.ReconnectInterval := AValue;
 end;
 
-procedure TpSCADACustomSocket.SetTimeout(AValue: LongWord);
+
+procedure TpSCADACustomSocket.SetTimeout(AValue: longword);
 begin
-  if FTimeout=AValue then Exit;
+  if FTimeout = AValue then Exit;
   InterLockedExchange(FTimeout, AValue);
 end;
+
 
 procedure TpSCADACustomSocket.CallPortCloseHandlers;
 begin
@@ -406,11 +458,13 @@ begin
   TThread.Queue(nil, @DoPortClose);
 end;
 
+
 procedure TpSCADACustomSocket.CallPortCloseErrorHandlers;
 begin
   inherited CallPortCloseErrorHandlers;
   TThread.Queue(nil, @DoPortCloseError);
 end;
+
 
 procedure TpSCADACustomSocket.CallPortDisconnectedHandlers;
 begin
@@ -418,11 +472,13 @@ begin
   TThread.Queue(nil, @DoPortDisconnected);
 end;
 
+
 procedure TpSCADACustomSocket.CallPortOpenHandlers;
 begin
   inherited CallPortOpenHandlers;
   TThread.Queue(nil, @DoPortOpen);
 end;
+
 
 procedure TpSCADACustomSocket.CallPortOpenErrorHandlers;
 begin
@@ -430,11 +486,13 @@ begin
   TThread.Queue(nil, @DoPortOpenError);
 end;
 
+
 procedure TpSCADACustomSocket.CallReadErrorHandlers;
 begin
   inherited CallReadErrorHandlers;
   TThread.Queue(nil, @DoReadError);
 end;
+
 
 procedure TpSCADACustomSocket.CallWriteErrorHandlers;
 begin
@@ -442,54 +500,61 @@ begin
   TThread.Queue(nil, @DoWriteError);
 end;
 
+
 function TpSCADACustomSocket.Close: Boolean;
 begin
-  if ([csDesigning]*ComponentState=[]) or FExclusiveDevice then
+  if ([csDesigning] * ComponentState = []) or FExclusiveDevice then
     FConnectThread.Disconnect;
-  Result:=true;
+  Result := True;
 end;
+
 
 procedure TpSCADACustomSocket.Loaded;
 begin
-  FExclusiveDevice:=FExclusiveReaded;
+  FExclusiveDevice := FExclusiveReaded;
   inherited Loaded;
 end;
 
+
 function TpSCADACustomSocket.PortSettingsOK: Boolean;
 begin
-  Result:=IsIPv4Address(FIPv4Address);
+  Result := IsIPv4Address(FIPv4Address);
 end;
+
 
 function TpSCADACustomSocket.Open: Boolean;
 begin
-  if ([csDesigning]*ComponentState=[]) or FExclusiveDevice then
+  if ([csDesigning] * ComponentState = []) or FExclusiveDevice then
     FConnectThread.Connect;
-  Result:=true;
+  Result := True;
 end;
+
 
 function TpSCADACustomSocket.ReallyActive: Boolean;
 begin
-  Result:=FSocket<>InvalidSocket;
+  Result := FSocket <> InvalidSocket;
 end;
+
 
 constructor TpSCADACustomSocket.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FPortNumber:=102;
-  FTimeout:=100;
-  FExclusiveDevice:=true;
-  FSocket:=InvalidSocket;
-  FSocketType:=GetSocketType;
+  FPortNumber := 102;
+  FTimeout := 100;
+  FExclusiveDevice := True;
+  FSocket := InvalidSocket;
+  FSocketType := GetSocketType;
 
-  FConnectThread:=TpSCADAConnectSocketThread.Create;
-  FConnectThread.EnableAutoReconnect:=true;
-  FConnectThread.ReconnectInterval:=5000;
-  FConnectThread.ConnectSocket:=@ConnectSocket;
-  FConnectThread.ReconnectSocket:=@ReconnectSocket;
-  FConnectThread.DisconnectSocket:=@CloseMySocket;
-  FConnectThread.CheckSocket:=@CheckSocket;
+  FConnectThread := TpSCADAConnectSocketThread.Create;
+  FConnectThread.EnableAutoReconnect := True;
+  FConnectThread.ReconnectInterval := 5000;
+  FConnectThread.ConnectSocket := @ConnectSocket;
+  FConnectThread.ReconnectSocket := @ReconnectSocket;
+  FConnectThread.DisconnectSocket := @CloseMySocket;
+  FConnectThread.CheckSocket := @CheckSocket;
   FConnectThread.Start;
 end;
+
 
 destructor TpSCADACustomSocket.Destroy;
 begin
@@ -499,52 +564,60 @@ begin
   FreeAndNil(FConnectThread);
 end;
 
-function TpSCADACustomSocket.Read(buffer: PByte; buffer_size,
-  max_retries: LongInt; var bytes_read: LongInt): LongInt;
+
+function TpSCADACustomSocket.Read(buffer: PByte; BufferSize, MaxRetries: LongInt;
+  var BytesRead: LongInt): LongInt;
 var
-  lidos:LongInt;
-  tentativas:Cardinal;
-  incretries:Boolean = false;
+  lidos: LongInt;
+  tentativas: Cardinal;
+  incretries: Boolean = False;
 begin
-  Result:=iorNone;
+  Result := iorNone;
 
   if BeingDestroyed then exit;
 
   tentativas := 0;
   lidos := 0;
 
-  bytes_read := 0;
-  while (bytes_read<buffer_size) and (tentativas<max_retries) do begin
-    try
-      lidos := socket_recv(@buffer[bytes_read], buffer_size-bytes_read, 0, FTimeout);
-    finally
+  BytesRead := 0;
+  while (BytesRead < BufferSize) and (tentativas < MaxRetries) do
+    begin
+      try
+        lidos := socket_recv(@buffer[BytesRead], BufferSize - BytesRead, 0, FTimeout);
+      finally
+      end;
+
+      if lidos <= 0 then
+        begin
+          if not CheckConnection(Result, incretries) then
+            begin
+              break;
+            end;
+          if incRetries then
+            Inc(tentativas);
+        end
+      else
+        BytesRead := BytesRead + lidos;
     end;
 
-    if lidos<=0 then begin
-      if not CheckConnection(Result, incretries) then begin
-        break;
-      end;
-      if incRetries then
-        inc(tentativas);
-    end else
-      bytes_read := bytes_read + lidos;
-  end;
-
-  if buffer_size>bytes_read then begin
-    if Result=iorNone then
-      Result := iorTimeOut;
-  end else
-    Result := bytes_read;
+  if BufferSize > BytesRead then
+    begin
+      if Result = iorNone then
+        Result := iorTimeOut;
+    end
+  else
+    Result := BytesRead;
 end;
 
-function TpSCADACustomSocket.Write(buffer: PByte; buffer_size,
-  max_retries: LongInt; var bytes_written: LongInt): LongInt;
+
+function TpSCADACustomSocket.Write(buffer: PByte; buffer_size, max_retries: LongInt;
+  var bytes_written: LongInt): LongInt;
 var
-  escritos:LongInt;
-  tentativas:Cardinal;
-  incretries:Boolean = false;
+  escritos: LongInt;
+  tentativas: Cardinal;
+  incretries: Boolean = False;
 begin
-  Result:=iorNone;
+  Result := iorNone;
 
   if BeingDestroyed then exit;
 
@@ -552,29 +625,35 @@ begin
   escritos := 0;
 
   bytes_written := 0;
-  while (bytes_written<buffer_size) and (tentativas<max_retries) do begin
-    try
-      escritos := socket_send(@buffer[bytes_written], buffer_size-bytes_written, 0, FTimeout);
-    finally
+  while (bytes_written < buffer_size) and (tentativas < max_retries) do
+    begin
+      try
+        escritos := socket_send(@buffer[bytes_written], buffer_size - bytes_written,
+          0, FTimeout);
+      finally
+      end;
+
+      if escritos <= 0 then
+        begin
+          if not CheckConnection(Result, incretries) then
+            break;
+          if incRetries then
+            Inc(tentativas);
+        end
+      else
+        bytes_written := bytes_written + escritos;
     end;
 
-    if escritos<=0 then begin
-      if not CheckConnection(Result, incretries) then
-        break;
-      if incRetries then
-        inc(tentativas);
-    end else
-      bytes_written := bytes_written + escritos;
-  end;
-
-  if buffer_size>bytes_written then begin
-    Result := iorTimeOut;
-  end else
+  if buffer_size > bytes_written then
+    begin
+      Result := iorTimeOut;
+    end
+  else
     Result := iorOK;
 
-  if Result<iorOK then
+  if Result < iorOK then
     CallWriteErrorHandlers;
 end;
 
-end.
 
+end.

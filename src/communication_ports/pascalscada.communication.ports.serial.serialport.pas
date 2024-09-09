@@ -1,23 +1,25 @@
 unit pascalscada.communication.ports.serial.serialport;
 
+
 {$mode objfpc}{$H+}
+
 
 interface
 
+
 uses
   Classes, SysUtils
-  {$IFDEF UNIX}
+{$IFDEF UNIX}
   , pascalscada.communication.ports.serial.unixserialport
-  {$ENDIF}
-  {$IFDEF WINDOWS}
+{$ENDIF}
 
-  {$ENDIF};
 
 type
 
   {$IFDEF UNIX}
   TpSCADABaseSerialPort = class(TpSCADAUnixSerialPort);
   {$ENDIF}
+
 
   { TpSCADASerialPort }
 
@@ -35,7 +37,6 @@ type
     property StopBits;
     property Timeout;
 
-
     property OnPortOpen;
     property OnPortClose;
     property OnPortOpenError;
@@ -43,7 +44,8 @@ type
     property OnWriteError;
   end;
 
+
 implementation
 
-end.
 
+end.
